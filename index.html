@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Recharge — post-lunch science reset</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap');
+
+  :root{
+    --bg: #172625;
+    --panel: #1F332F;
+    --panel-2: #263F3A;
+    --line: #3B5652;
+    --ink: #F2EFE4;
+    --ink-dim: #A9BAB4;
+    --competitive: #E8743B;
+    --competitive-dim: #6b4634;
+    --creative: #A98CD1;
+    --creative-dim: #4c4460;
+    --movement: #C3DE5A;
+    --movement-dim: #4c5636;
+  }
+
+  *{ box-sizing: border-box; }
+
+  body{
+    margin:0;
+    background:
+      radial-gradient(1200px 600px at 15% -10%, rgba(195,222,90,0.06), transparent 60%),
+      radial-gradient(1000px 500px at 100% 0%, rgba(169,140,209,0.05), transparent 55%),
+      var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', system-ui, sans-serif;
+    min-height: 100vh;
+  }
+
+  .app{
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  header h1{
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 42px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 0 0 8px;
+  }
+
+  header p{
+    color: var(--ink-dim);
+    font-size: 16px;
+    line-height: 1.5;
+    max-width: 46ch;
+    margin: 0 0 36px;
+  }
+
+  .panel{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 22px 24px;
+    margin-bottom: 20px;
+  }
+
+  .field{ margin-bottom: 18px; }
+  .field:last-child{ margin-bottom: 0; }
+
+  .field label{
+    display:block;
+    font-size: 13px;
+    color: var(--ink-dim);
+    margin-bottom: 8px;
+  }
+
+  #topic{
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    padding: 12px 14px;
+    outline: none;
+    transition: border-color .15s ease;
+  }
+  #topic:focus{ border-color: var(--movement); }
+  #topic::placeholder{ color: #6c7f7a; }
+
+  .time-select{
+    display:flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .time-btn{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    color: var(--ink-dim);
+    padding: 9px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all .15s ease;
+  }
+  .time-btn:hover{ border-color: var(--ink-dim); color: var(--ink); }
+  .time-btn.active{
+    background: var(--movement);
+    border-color: var(--movement);
+    color: #16210f;
+    font-weight: 600;
+  }
+
+  .categories{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  @media (max-width: 620px){
+    .categories{ grid-template-columns: 1fr; }
+  }
+
+  .cat-card{
+    text-align:left;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 20px 18px;
+    cursor: pointer;
+    color: var(--ink);
+    font-family: inherit;
+    position: relative;
+    overflow: hidden;
+    transition: transform .12s ease, border-color .15s ease, background .15s ease;
+  }
+  .cat-card:hover{ transform: translateY(-2px); }
+  .cat-card:disabled{ cursor: default; opacity: .55; transform: none; }
+
+  .cat-card::before{
+    content:"";
+    position:absolute;
+    top:0; left:0; right:0;
+    height: 4px;
+  }
+  .cat-card.competitive::before{ background: var(--competitive); }
+  .cat-card.creative::before{ background: var(--creative); }
+  .cat-card.movement::before{ background: var(--movement); }
+
+  .cat-card.competitive:hover, .cat-card.competitive.selected{ border-color: var(--competitive); background: linear-gradient(180deg, var(--panel), var(--competitive-dim) 260%); }
+  .cat-card.creative:hover, .cat-card.creative.selected{ border-color: var(--creative); background: linear-gradient(180deg, var(--panel), var(--creative-dim) 260%); }
+  .cat-card.movement:hover, .cat-card.movement.selected{ border-color: var(--movement); background: linear-gradient(180deg, var(--panel), var(--movement-dim) 260%); }
+
+  .cat-icon{ width: 26px; height: 26px; margin-bottom: 12px; display:block; }
+  .cat-card.competitive .cat-icon{ color: var(--competitive); }
+  .cat-card.creative .cat-icon{ color: var(--creative); }
+  .cat-card.movement .cat-icon{ color: var(--movement); }
+
+  .cat-card h3{
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 17px;
+    margin: 0 0 4px;
+  }
+  .cat-card p{
+    font-size: 13px;
+    color: var(--ink-dim);
+    margin: 0;
+    line-height: 1.4;
+  }
+
+  .status{
+    font-size: 14px;
+    color: var(--ink-dim);
+    margin: 4px 2px 20px;
+    min-height: 20px;
+  }
+  .status.error{ color: var(--competitive); }
+
+  .loading{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    color: var(--ink-dim);
+    font-size: 15px;
+  }
+  .dial{
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    border: 2px solid var(--line);
+    border-top-color: var(--movement);
+    animation: spin .8s linear infinite;
+    flex-shrink:0;
+  }
+  @keyframes spin{ to{ transform: rotate(360deg); } }
+
+  .ticket{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 26px 26px 22px;
+    position: relative;
+  }
+  .ticket-strip{
+    position:absolute; top:0; left:0; right:0; height: 5px; border-radius: 14px 14px 0 0;
+  }
+  .ticket.competitive .ticket-strip{ background: var(--competitive); }
+  .ticket.creative .ticket-strip{ background: var(--creative); }
+  .ticket.movement .ticket-strip{ background: var(--movement); }
+
+  .ticket-head{
+    display:flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 4px;
+  }
+
+  .ticket-kind{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.02em;
+  }
+  .ticket.competitive .ticket-kind{ color: var(--competitive); }
+  .ticket.creative .ticket-kind{ color: var(--creative); }
+  .ticket.movement .ticket-kind{ color: var(--movement); }
+
+  .ticket-time{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: var(--ink-dim);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 4px 12px;
+    white-space: nowrap;
+  }
+
+  .ticket h2{
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 24px;
+    margin: 6px 0 10px;
+    line-height: 1.25;
+  }
+
+  .ticket .hook{
+    font-size: 15px;
+    color: var(--ink);
+    line-height: 1.55;
+    margin: 0 0 20px;
+    padding: 12px 14px;
+    background: var(--bg);
+    border-left: 3px solid;
+    border-radius: 0 8px 8px 0;
+  }
+  .ticket.competitive .hook{ border-color: var(--competitive); }
+  .ticket.creative .hook{ border-color: var(--creative); }
+  .ticket.movement .hook{ border-color: var(--movement); }
+
+  .ticket h4{
+    font-size: 12px;
+    color: var(--ink-dim);
+    margin: 0 0 8px;
+    font-weight: 600;
+  }
+
+  .materials{
+    display:flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .materials span{
+    font-size: 13px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    padding: 5px 11px;
+    border-radius: 20px;
+    color: var(--ink-dim);
+  }
+
+  .steps{
+    margin: 0 0 20px;
+    padding: 0;
+    list-style: none;
+    counter-reset: step;
+  }
+  .steps li{
+    counter-increment: step;
+    position: relative;
+    padding: 0 0 12px 30px;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  .steps li::before{
+    content: counter(step);
+    position: absolute;
+    left: 0; top: 0;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    display:flex; align-items:center; justify-content:center;
+    color: var(--ink-dim);
+  }
+
+  .redirect-note{
+    font-size: 13px;
+    color: var(--ink-dim);
+    line-height: 1.5;
+    border-top: 1px dashed var(--line);
+    padding-top: 16px;
+    margin-bottom: 20px;
+  }
+  .redirect-note b{ color: var(--ink); font-weight: 600; }
+
+  .ticket-actions{
+    display:flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .btn{
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--ink);
+    cursor: pointer;
+    transition: border-color .15s ease;
+  }
+  .btn:hover{ border-color: var(--ink-dim); }
+  .btn:disabled{ opacity: .5; cursor: default; }
+  .btn.primary{
+    background: var(--movement);
+    border-color: var(--movement);
+    color: #16210f;
+    font-weight: 600;
+  }
+
+  .hidden{ display:none; }
+
+  footer{
+    margin-top: 30px;
+    font-size: 12px;
+    color: #5f736d;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <h1>Recharge</h1>
+    <p>Enter a topic, pick a time limit, and pull a quick activity that channels post-lunch energy into your next lesson.</p>
+  </header>
+
+  <div class="panel">
+    <div class="field">
+      <label for="topic">Science topic</label>
+      <input id="topic" type="text" placeholder="e.g. cell organelles, Newton's laws, the rock cycle" />
+    </div>
+    <div class="field">
+      <label>Time limit</label>
+      <div class="time-select" id="timeSelect">
+        <button class="time-btn" data-time="3">3 min</button>
+        <button class="time-btn active" data-time="5">5 min</button>
+        <button class="time-btn" data-time="8">8 min</button>
+        <button class="time-btn" data-time="10">10 min</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="categories" id="categories">
+    <button class="cat-card competitive" data-cat="competitive">
+      <svg class="cat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="13" r="8"/><path d="M12 5V3M9 3h6M9.5 10.5l2.5 2.5 3.5-3.5"/></svg>
+      <h3>Competitive</h3>
+      <p>Teams, points, and a race against the clock.</p>
+    </button>
+    <button class="cat-card creative" data-cat="creative">
+      <svg class="cat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4L12 3z"/><path d="M5 17l.8 2 2 .8-2 .8L5 22l-.8-2-2-.8 2-.8L5 17z"/></svg>
+      <h3>Creative</h3>
+      <p>Draw, invent, or tell a story with a science twist.</p>
+    </button>
+    <button class="cat-card movement" data-cat="movement">
+      <svg class="cat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="14" cy="4" r="1.6" fill="currentColor" stroke="none"/><path d="M10 21l1.5-5 2-2 1 4 3 2M9 12l2-3 4 .5 2.5 2M8 9l3-2"/></svg>
+      <h3>Movement</h3>
+      <p>Students are up, out of their seats, and moving.</p>
+    </button>
+  </div>
+
+  <div class="status" id="status"></div>
+
+  <div id="result"></div>
+
+  <footer>Works fully offline — no internet connection or account needed. Regenerate for a different idea with the same topic and time limit.</footer>
+</div>
+
+<script>
+  const state = {
+    time: 5,
+    lastCategory: null,
+    recentIndex: { competitive: [], creative: [], movement: [] }
+  };
+
+  const topicInput = document.getElementById('topic');
+  const timeSelect = document.getElementById('timeSelect');
+  const categories = document.getElementById('categories');
+  const statusEl = document.getElementById('status');
+  const resultEl = document.getElementById('result');
+
+  const CATEGORY_LABEL = {
+    competitive: 'Competitive',
+    creative: 'Creative',
+    movement: 'Movement-based'
+  };
+
+  // Scales quantities to the chosen time limit so the same template
+  // feels right whether it's a 3-minute or 10-minute reset.
+  function getScale(time) {
+    if (time <= 3)  return { items: 5,  rounds: 1, rotations: 2, seconds: 30 };
+    if (time <= 5)  return { items: 8,  rounds: 2, rotations: 3, seconds: 45 };
+    if (time <= 8)  return { items: 12, rounds: 3, rotations: 4, seconds: 60 };
+    return             { items: 15, rounds: 4, rotations: 6, seconds: 90 };
+  }
+
+  function fill(str, vars) {
+    return str.replace(/\{(\w+)\}/g, (_, key) => vars[key] ?? `{${key}}`);
+  }
+
+  // Each template is a topic-agnostic framework. {topic}, {items}, {rounds},
+  // {rotations}, and {seconds} get filled in at generation time.
+  const TEMPLATES = {
+    competitive: [
+      {
+        title: 'Whiteboard Blitz',
+        hook: "You have {seconds} seconds. In your team, write down every word, fact, or example you can think of about {topic}. Go!",
+        materials: ['Whiteboard or paper per team', 'Marker or pen'],
+        steps: [
+          'Split the class into teams of 3-4.',
+          'Give each team {seconds} seconds to list as many correct facts or terms about {topic} as they can.',
+          'Time is up — teams read their list aloud, one item at a time.',
+          'Cross off any repeated items across teams; the team with the most surviving items wins.'
+        ],
+        note: 'A short, loud burst of recall pulls attention off lunch and onto the topic before anyone has time to drift.'
+      },
+      {
+        title: 'Category Countdown',
+        hook: "I'm going to say a category related to {topic}. When I say go, shout out one example — no repeats!",
+        materials: [],
+        steps: [
+          'Name a specific category tied to {topic} (e.g. a type, example, or step within it).',
+          'Go around the room or call on raised hands; each answer must be new.',
+          'Run {rounds} rounds with a different angle on {topic} each time.',
+          'Whoever gives the last valid answer in a round scores a point for their table.'
+        ],
+        note: 'Fast-paced turn taking channels leftover chatter into on-topic talking instead of off-topic talking.'
+      },
+      {
+        title: 'True or False Face-off',
+        hook: "I'll read a statement about {topic}. Thumbs up if it's true, thumbs down if it's false — fastest correct side wins the round.",
+        materials: [],
+        steps: [
+          'Prepare {items} short true/false statements about {topic} in your head or jot them on the board as you go.',
+          'Read one statement aloud; students respond instantly with thumbs up or down.',
+          'Call out the correct answer and briefly say why.',
+          'Track which side of the room got more right across {rounds} rounds.'
+        ],
+        note: 'The physical, instant response (thumbs, not raised hands) gives restless energy somewhere immediate to go.'
+      },
+      {
+        title: 'Speed Sort Showdown',
+        hook: "Working with your table, sort these ideas into two piles: things that are true about {topic}, and things that aren't.",
+        materials: ['Scrap paper for sorting labels'],
+        steps: [
+          'Call out {items} short statements or examples related to {topic}, one at a time.',
+          'Each table quickly decides "fits" or "doesn\'t fit" and writes it under the right heading.',
+          'After all items are called, reveal the correct sorting.',
+          'The table with the most correct placements wins.'
+        ],
+        note: "Quick group decision-making gets everyone leaning in and talking about the topic instead of the weekend."
+      },
+      {
+        title: 'One-Word Chain',
+        hook: "We're building a chain of words connected to {topic}. I'll start — you can't repeat a word that's already been said.",
+        materials: [],
+        steps: [
+          'Say one word or short phrase connected to {topic} to start the chain.',
+          'Go around the room; each student adds a new, related word within 5 seconds.',
+          'Anyone who repeats, stalls, or gives an unrelated word is out for this round.',
+          'Play {rounds} rounds, restarting the chain each time.'
+        ],
+        note: 'The time pressure keeps students alert and listening closely instead of half-checked-out from lunch.'
+      },
+      {
+        title: 'Draw It Fast',
+        hook: "One partner draws, the other guesses. No talking, no letters or numbers — just a quick sketch of a word about {topic}.",
+        materials: ['Paper', 'Pencil per pair'],
+        steps: [
+          'Pair students up; one is the artist, one is the guesser.',
+          'Whisper or show the artist a term related to {topic}; they sketch it silently.',
+          'The guesser has {seconds} seconds to name the term from the drawing.',
+          'Swap roles and repeat for {rounds} rounds with new terms.'
+        ],
+        note: 'Drawing under a timer is playful enough to burn off energy while still locking attention onto vocabulary.'
+      },
+      {
+        title: 'Silent Card Race',
+        hook: 'Without talking, race your table to line up these ideas about {topic} in the right order.',
+        materials: ['Scrap paper torn into strips'],
+        steps: [
+          'Each table quickly writes {items} key steps, stages, or examples of {topic} on separate paper strips.',
+          'Shuffle the strips and pass them to the table beside you.',
+          'That table has {seconds} seconds, working silently, to arrange the strips in the correct order.',
+          'Check answers together as a class and name the fastest correct table.'
+        ],
+        note: 'The silence rule forces focus on the content itself rather than on side conversations.'
+      },
+      {
+        title: 'Last One Standing',
+        hook: "Stand up. I'll ask quick questions about {topic} — get one wrong or hesitate, and you take a seat.",
+        materials: [],
+        steps: [
+          'Everyone stands beside their desk.',
+          'Ask a rapid-fire question about {topic}; call on a student to answer within 3 seconds.',
+          'A wrong or missed answer means that student sits down; correct answers stay standing.',
+          'Keep going for {rounds} rounds or until only a few students remain standing.'
+        ],
+        note: 'Standing up briefly resets restless bodies, and the elimination format keeps everyone listening for their turn.'
+      }
+    ],
+
+    creative: [
+      {
+        title: '60-Second Metaphor',
+        hook: "In {seconds} seconds, come up with something totally unrelated to school that reminds you of {topic}. Be ready to explain why.",
+        materials: ['Scrap paper (optional)'],
+        steps: [
+          'Give students {seconds} seconds of quiet thinking time to invent a comparison for {topic}.',
+          'In pairs, each student shares their comparison and explains the connection.',
+          'Ask 2-3 volunteers to share their favorite one with the whole class.',
+          'Note the most creative or accurate comparison on the board.'
+        ],
+        note: 'Building an unusual comparison pulls students into imaginative thinking that naturally quiets side chatter.'
+      },
+      {
+        title: 'Comic Strip Sketch',
+        hook: 'You have {seconds} seconds to sketch a 3-panel comic strip that explains one idea about {topic}.',
+        materials: ['Paper', 'Pencil or pen'],
+        steps: [
+          'Fold or draw a paper into 3 boxes.',
+          'In {seconds} seconds, sketch a simple 3-panel comic showing a key idea from {topic} — stick figures are fine.',
+          'Trade comics with a neighbor and guess what idea their comic explains.',
+          'Ask a couple of students to hold theirs up for the class.'
+        ],
+        note: 'Hands-on drawing gives restless energy a quiet outlet while keeping the topic front and center.'
+      },
+      {
+        title: 'Six-Word Story',
+        hook: 'Can you sum up {topic} in exactly six words? You have {seconds} seconds to write your six-word story.',
+        materials: ['Scrap paper'],
+        steps: [
+          'Explain the six-word story format (exactly six words, no more, no less).',
+          'Give students {seconds} seconds to write a six-word story capturing something true about {topic}.',
+          'Students read their six words aloud, popcorn-style, in one quick round.',
+          'Vote or applaud for the one that captures {topic} best.'
+        ],
+        note: 'The tight word limit forces fast, focused thinking instead of drawn-out conversation.'
+      },
+      {
+        title: 'Explain It to an Alien',
+        hook: 'An alien has never heard of {topic}. In {seconds} seconds, write or say how you would explain it to them.',
+        materials: [],
+        steps: [
+          'Set the scene: an alien with no background knowledge needs a simple explanation of {topic}.',
+          'Students get {seconds} seconds to draft their explanation, alone or in pairs.',
+          'A few students perform their "alien explanation" for the class.',
+          'Point out the clearest or funniest explanation as the round winner.'
+        ],
+        note: 'Reframing familiar content for an imaginary audience turns review into a low-pressure creative challenge.'
+      },
+      {
+        title: 'Character Design',
+        hook: 'Turn one part of {topic} into a cartoon character. Give it a name and one superpower.',
+        materials: ['Paper', 'Pencil or markers'],
+        steps: [
+          'Ask students to pick one component, term, or step within {topic}.',
+          'In {seconds} seconds, sketch it as a character with a name and one "superpower" based on what it actually does.',
+          'Pair up and introduce your character to a partner.',
+          'Invite a few characters to be introduced to the whole class.'
+        ],
+        note: 'Personifying content makes abstract ideas memorable while giving hands something to do besides socialize.'
+      },
+      {
+        title: 'Postcard From Inside',
+        hook: "Imagine you're shrunk down and standing inside {topic} right now. Write a quick postcard describing what you see.",
+        materials: ['Paper'],
+        steps: [
+          'Set the scene: students are miniaturized and standing inside {topic}.',
+          'Give {seconds} seconds to write a short postcard describing the scene, in first person.',
+          'Partners trade postcards and read each other\'s aloud quietly.',
+          'Ask one or two volunteers to read theirs to the class.'
+        ],
+        note: 'Imaginative writing settles students into individual focus time right when they need it most.'
+      },
+      {
+        title: 'Rhyme It to Remember It',
+        hook: 'Write two rhyming lines that would help someone remember one fact about {topic}.',
+        materials: ['Scrap paper'],
+        steps: [
+          'Model one example rhyme about {topic} to set the tone.',
+          'Give students {seconds} seconds to write their own two-line rhyme about {topic}.',
+          'Students perform their rhyme for a partner or small group.',
+          'Collect a few favorites to post or reuse as a class reference.'
+        ],
+        note: 'Wordplay is naturally engaging and gives energy a rhythmic, low-volume outlet.'
+      },
+      {
+        title: 'Emoji Retell',
+        hook: 'Retell one idea from {topic} using only emojis or simple symbols — no words allowed.',
+        materials: ['Paper'],
+        steps: [
+          'Students choose one idea, process, or term from {topic}.',
+          'In {seconds} seconds, they sketch or write it out using only emojis or simple symbols.',
+          'Trade with a partner, who tries to decode the message back into words.',
+          'Reveal a couple to the whole class and check accuracy together.'
+        ],
+        note: 'Translating into symbols keeps thinking active on the topic while feeling like a game, not a task.'
+      }
+    ],
+
+    movement: [
+      {
+        title: 'Four Corners Stance',
+        hook: "I'll post four possible answers around the room. Walk to the corner that matches your answer about {topic}.",
+        materials: ['4 sticky notes or signs (optional)'],
+        steps: [
+          'Label the four corners of the room A, B, C, D (verbally is fine).',
+          'Ask a question about {topic} with four possible answers, one per corner.',
+          'Students walk to the corner matching their answer within {seconds} seconds.',
+          'Ask one student in each corner to briefly explain their choice, then reveal the correct one.'
+        ],
+        note: 'Physically walking to a stance gets bodies moving and turns a quiet question into an active commitment.'
+      },
+      {
+        title: 'Human Diagram',
+        hook: "Using your bodies, arrange yourselves in this room to show the steps or parts of {topic} in the right order.",
+        materials: [],
+        steps: [
+          'Split the class into groups of 4-6.',
+          'Assign each group a process or structure within {topic} to represent using their bodies and positions.',
+          'Give the group {seconds} seconds to arrange themselves correctly, in order or in the right spatial relationship.',
+          'Each group "presents" their human diagram while the class checks it against the real thing.'
+        ],
+        note: 'Physically building the diagram burns energy while forcing the group to agree on how {topic} actually works.'
+      },
+      {
+        title: 'Simon Says: Science Edition',
+        hook: "If what I say is true about {topic}, do the action. If it's false, freeze — don't move a muscle.",
+        materials: [],
+        steps: [
+          'Pick one simple action for "true" (e.g. jump, raise arms) — students freeze for "false".',
+          'Read a statement about {topic}; students respond instantly with the action or a freeze.',
+          'Anyone who reacts incorrectly sits out one round, then rejoins.',
+          'Run {rounds} rounds, mixing in trickier statements as you go.'
+        ],
+        note: 'The instant physical response channel gives restless bodies something legitimate to do every few seconds.'
+      },
+      {
+        title: 'Walk & Talk Pairs',
+        hook: 'Find a partner, stand up, and be ready to talk about {topic} for {seconds} seconds before we rotate.',
+        materials: [],
+        steps: [
+          'Give students a specific question or prompt about {topic} to discuss.',
+          'Students stand, find a nearby partner, and discuss for {seconds} seconds.',
+          'Call "rotate" — students find a new partner and repeat with a slightly different angle on {topic}.',
+          'Repeat for {rotations} total rotations, then bring the class back together for one or two shares.'
+        ],
+        note: 'Standing and moving to a new partner resets focus while keeping every conversation on-topic.'
+      },
+      {
+        title: 'Silent Charades',
+        hook: 'No talking — just act it out. Can your classmates guess this idea from {topic} using only movement?',
+        materials: [],
+        steps: [
+          'Prepare {items} short terms or ideas from {topic} (mentally or on slips of paper).',
+          'Call a student up to silently act out one term for the class.',
+          'Classmates guess within {seconds} seconds; if no one gets it, reveal the answer and move on.',
+          'Rotate through {rounds} rounds with different students acting.'
+        ],
+        note: 'Full-body movement burns energy while the guessing keeps everyone else\'s attention locked on the topic.'
+      },
+      {
+        title: 'Line Up in Order',
+        hook: 'Without talking to each other first, physically line up in the room in the correct order for {topic}.',
+        materials: [],
+        steps: [
+          'Assign each student (or small group) one step, stage, or example within {topic}.',
+          'Without comparing notes out loud, students physically arrange themselves in a line in the correct order.',
+          'Once the line settles, go down it together and check each position out loud.',
+          'Fix any mistakes as a class and celebrate once the order is correct.'
+        ],
+        note: 'The physical puzzle-solving keeps students moving and negotiating instead of chatting off-topic.'
+      },
+      {
+        title: 'Gallery Walk Sprint',
+        hook: "I've posted a few quick prompts about {topic} around the room. You have {seconds} seconds at each stop.",
+        materials: ['Paper posted at 3-4 spots around the room (or just verbal stops)'],
+        steps: [
+          'Set up {rotations} quick stops around the room, each with a short prompt or image related to {topic}.',
+          'Students rotate in small groups, spending {seconds} seconds at each stop jotting one observation or answer.',
+          'Signal the rotation to the next stop until every group has visited each one.',
+          'Regroup and ask a few students to share what they noticed at one stop.'
+        ],
+        note: 'Constant, structured movement between stations uses up wandering energy productively.'
+      },
+      {
+        title: 'Body Vote',
+        hook: 'I\'ll read a statement about {topic}. Move to this side of the room if you agree, that side if you disagree.',
+        materials: [],
+        steps: [
+          'Designate one side of the room "agree" and the other "disagree."',
+          'Read a debatable or fact-check statement about {topic}.',
+          'Students physically move to the side that matches their view within {seconds} seconds.',
+          'Ask one student from each side to briefly defend their position before revealing the answer.'
+        ],
+        note: 'Committing to a side with your feet makes the moment active and gets quieter students moving too.'
+      }
+    ]
+  };
+
+  timeSelect.addEventListener('click', (e) => {
+    const btn = e.target.closest('.time-btn');
+    if (!btn) return;
+    state.time = Number(btn.dataset.time);
+    [...timeSelect.children].forEach(b => b.classList.toggle('active', b === btn));
+  });
+
+  categories.addEventListener('click', (e) => {
+    const card = e.target.closest('.cat-card');
+    if (!card) return;
+    const topic = topicInput.value.trim();
+    if (!topic) {
+      statusEl.textContent = 'Add a science topic first, then pick a category.';
+      statusEl.classList.add('error');
+      topicInput.focus();
+      return;
+    }
+    statusEl.classList.remove('error');
+    statusEl.textContent = '';
+    generate(card.dataset.cat, topic);
+  });
+
+  function pickTemplateIndex(category) {
+    const pool = TEMPLATES[category];
+    const recent = state.recentIndex[category];
+    let candidates = pool.map((_, i) => i).filter(i => !recent.includes(i));
+    if (candidates.length === 0) {
+      candidates = pool.map((_, i) => i);
+      state.recentIndex[category] = [];
+    }
+    const choice = candidates[Math.floor(Math.random() * candidates.length)];
+    state.recentIndex[category].push(choice);
+    if (state.recentIndex[category].length > pool.length - 1) {
+      state.recentIndex[category].shift();
+    }
+    return choice;
+  }
+
+  function generate(category, topic) {
+    state.lastCategory = category;
+    [...categories.children].forEach(c => c.classList.toggle('selected', c.dataset.cat === category));
+
+    const scale = getScale(state.time);
+    const vars = { topic, ...scale };
+    const idx = pickTemplateIndex(category);
+    const template = TEMPLATES[category][idx];
+
+    const activity = {
+      title: fill(template.title, vars),
+      hook: fill(template.hook, vars),
+      materials: template.materials.map(m => fill(m, vars)),
+      steps: template.steps.map(s => fill(s, vars)),
+      redirect_note: template.note
+    };
+
+    renderActivity(category, topic, activity);
+  }
+
+  function renderActivity(category, topic, activity) {
+    const materials = activity.materials.length
+      ? activity.materials.map(m => `<span>${escapeHtml(m)}</span>`).join('')
+      : '<span>Nothing but attention</span>';
+
+    const steps = activity.steps.map(s => `<li>${escapeHtml(s)}</li>`).join('');
+
+    resultEl.innerHTML = `
+      <div class="ticket ${category}">
+        <div class="ticket-strip"></div>
+        <div class="ticket-head">
+          <span class="ticket-kind">${CATEGORY_LABEL[category].toUpperCase()} · ${escapeHtml(topic).toUpperCase()}</span>
+          <span class="ticket-time">${state.time} min</span>
+        </div>
+        <h2>${escapeHtml(activity.title)}</h2>
+        <p class="hook">${escapeHtml(activity.hook)}</p>
+        <h4>Materials</h4>
+        <div class="materials">${materials}</div>
+        <h4>Run it</h4>
+        <ol class="steps">${steps}</ol>
+        <p class="redirect-note"><b>Why it works:</b> ${escapeHtml(activity.redirect_note)}</p>
+        <div class="ticket-actions">
+          <button class="btn primary" id="regenBtn">Try another idea</button>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('regenBtn').addEventListener('click', () => {
+      generate(category, topicInput.value.trim() || topic);
+    });
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str ?? '';
+    return div.innerHTML;
+  }
+</script>
+
+</body>
+</html>
